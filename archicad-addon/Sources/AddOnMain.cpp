@@ -396,6 +396,10 @@ GSErrCode Initialize (void)
             propertyCommands, "1.0.9",
             "Deletes the given Custom Property Definitions."
         );
+        err |= RegisterCommand<ImportPropertyDefinitionsCommand> (
+            propertyCommands, "1.3.1",
+            "Import Property Definitions from XML file."
+        );
         AddCommandGroup (propertyCommands);
     }
 
