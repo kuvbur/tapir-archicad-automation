@@ -1318,3 +1318,76 @@ GS::ObjectState DeletePropertyDefinitionsCommand::Execute (const GS::ObjectState
 
     return response;
 }
+
+
+ImportPropertyDefinitionsCommand::ImportPropertyDefinitionsCommand () :
+    CommandBase (CommonSchema::Used)
+{
+}
+
+GS::String ImportPropertyDefinitionsCommand::GetName () const
+{
+    return "ImportPropertyDefinitions";
+}
+
+GS::Optional<GS::UniString> ImportPropertyDefinitionsCommand::GetInputParametersSchema () const
+{
+    return R"({
+        "type": "object",
+        "properties": {
+            "xmlFilePath": {
+                "type": "string",
+                "description": "The property xml to import."
+            },
+            "nameConflictResolutionPolicy": {
+                "type": "string",
+                "description": "Specifies how to resolve name conflicts. 'append' - generate a new, unused name for the imported property, 'replace' - replace the definition in the plan with the imported one, 'skip' - keep the definition in the plan intact, and discard the imported one. The default is 'skip'.",
+                "enum": ["skip", "replace", "append"]
+            }
+        },
+        "additionalProperties": false,
+        "required": [
+            "method",
+            "xmlFilePath"
+        ]
+    })";
+}
+
+GS::Optional<GS::UniString> ImportPropertyDefinitionsCommand::GetResponseSchema () const
+{
+    return R"({
+        "$ref": "#/ExecutionResult"
+    })";
+}
+
+GS::ObjectState ImportPropertyDefinitionsCommand::Execute (const GS::ObjectState& parameters, GS::ProcessControl& /*processControl*/) const
+{
+
+    GS::UniString xmlFilePath;
+    if (!parameters.Get ("xmlFilePath", xmlFilePath)) {
+        return CreateFailedExecutionResult (APIERR_BADPARS, "xmlFilePath parameter is missing");
+    }
+
+    GS::UniString nameConflictResolutionPolicy;
+    API_PropertyDefinitionNameConflictResolutionPolicy conflictResolutionPolicy;
+    if (!parameters.Get ("nameConflictResolutionPolicy", nameConflictResolutionPolicy)) {
+        conflictResolutionPolicy = API_SkipConflictingProperties;
+    } else {
+        if (nameConflictResolutionPolicy == "append") {
+            conflictResolutionPolicy = API_AppendConflictingProperties;
+        } else if (nameConflictResolutionPolicy == "replace") {
+            conflictResolutionPolicy = API_ReplaceConflictingProperties;
+        } else if (nameConflictResolutionPolicy == "skip") {
+            conflictResolutionPolicy = API_SkipConflictingProperties;
+        } else {
+            return CreateFailedExecutionResult (APIERR_BADPARS, "nameConflictResolutionPolicy parameter is invalid");
+        }
+    }
+
+    GSErrCode err = ACAPI_CallUndoableCommand ("ImportPropertyDefinitions", [&]() -> GSErrCode {
+        return ACAPI_Property_Import (xmlFilePath, conflictResolutionPolicy);
+    });
+
+    if (err != NoError) return CreateFailedExecutionResult (err, "failed to import property");
+    return CreateSuccessfulExecutionResult ();
+}
