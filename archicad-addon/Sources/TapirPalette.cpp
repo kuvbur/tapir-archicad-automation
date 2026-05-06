@@ -1,26 +1,26 @@
-#include "TapirPalette.hpp"
-#include "UvManager.hpp" 
-#include "ResourceIds.hpp"
-#include "VersionChecker.hpp"
+#include "AddOnVersion.hpp"
+#include "FileSystem.hpp"
+#include "Folder.hpp"
 #include "HTTP/Client/ClientConnection.hpp"
 #include "HTTP/Client/Request.hpp"
 #include "HTTP/Client/Response.hpp"
-#include "JSON/Value.hpp"
-#include "JSON/JDOMParser.hpp"
 #include "IBinaryChannelUtilities.hpp"
-#include "IOBinProtocolXs.hpp"
 #include "IChannelX.hpp"
-#include "StringConversion.hpp"
-#include "FileSystem.hpp"
-#include "Folder.hpp"
+#include "IOBinProtocolXs.hpp"
+#include "JSON/JDOMParser.hpp"
+#include "JSON/Value.hpp"
 #include "MessageLoopExecutor.hpp"
-#include "AddOnVersion.hpp"
 #include "MigrationHelper.hpp"
+#include "ResourceIds.hpp"
+#include "StringConversion.hpp"
+#include "TapirPalette.hpp"
+#include "UvManager.hpp" 
+#include "VersionChecker.hpp"
 
 #include <map>
 #include <regex>
 
-const GS::Guid        TapirPalette::paletteGuid("{2D42DF37-222F-40CD-BA86-B3279CCA1FEE}");
+const GS::Guid        TapirPalette::paletteGuid ("{2D42DF37-222F-40CD-BA86-B3279CCA1FEE}");
 GS::Ref<TapirPalette> TapirPalette::instance;
 
 static UShort GetConnectionPort ()
@@ -54,7 +54,7 @@ static IO::Location SaveBuiltInScript (const IO::Location& baseFolderLoc, const 
     }
 
     auto cStr = content.ToCStr ();
-    file.WriteBin (cStr.Get (), (GS::USize)strlen (cStr.Get()));
+    file.WriteBin (cStr.Get (), (GS::USize) strlen (cStr.Get ()));
 
     return fileLoc;
 }
@@ -70,7 +70,7 @@ static GS::UniString DownloadFileContent (const GS::UniString& fileDownloadUrl, 
     getRequest.GetRequestHeaderFieldCollection ().Add (HTTP::MessageHeader::HeaderFieldName::UserAgent,
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.99 Safari/537.36");
     for (const auto& kv : headers) {
-        getRequest.GetRequestHeaderFieldCollection ().Add(kv.first, kv.second);
+        getRequest.GetRequestHeaderFieldCollection ().Add (kv.first, kv.second);
     }
     clientConnection.Send (getRequest);
 
@@ -112,7 +112,7 @@ static std::map<GS::UniString, GS::UniString> GetFilesFromGitHubInRelativeLocati
 
         if (response.GetStatusCode () == HTTP::MessageHeader::StatusCode::OK) {
             JSON::ArrayValueRef arrayValue = GS::DynamicCast<JSON::ArrayValue> (parsed);
-            arrayValue->Enumerate ([&] (const JSON::ValueRef& assetValue) {
+            arrayValue->Enumerate ([&](const JSON::ValueRef& assetValue) {
                 JSON::ObjectValueRef objectValue = GS::DynamicCast<JSON::ObjectValue> (assetValue);
                 JSON::StringValueRef typeValue = GS::DynamicCast<JSON::StringValue> (objectValue->Get ("type"));
                 JSON::StringValueRef pathValue = GS::DynamicCast<JSON::StringValue> (objectValue->Get ("path"));
@@ -255,7 +255,7 @@ void TapirPalette::ButtonClicked (const DG::ButtonClickEvent& ev)
         if (IsProcessRunning ()) {
             process.Kill ();
         } else {
-            if (Config::Instance().AskUpdatingAddOnBeforeEachExecution () && UpdateAddOn ()) {
+            if (Config::Instance ().AskUpdatingAddOnBeforeEachExecution () && UpdateAddOn ()) {
                 return;
             }
 
@@ -370,7 +370,8 @@ void TapirPalette::ExecuteScript (const PopUpItemData& popUpItemData)
     {
         GS::Process& process;
 
-        class IconUpdateTask : public GS::Runnable {
+        class IconUpdateTask : public GS::Runnable
+        {
         public:
             IconUpdateTask () = default;
             virtual void Run ()
@@ -378,11 +379,12 @@ void TapirPalette::ExecuteScript (const PopUpItemData& popUpItemData)
                 TapirPalette::Instance ().SetRunButtonIcon ();
             }
         };
-        class OutputUpdateTask : public GS::Runnable {
+        class OutputUpdateTask : public GS::Runnable
+        {
             short type;
             GS::UniString text;
         public:
-            OutputUpdateTask (short _type, const GS::UniString& _text) : text(_text), type(_type)
+            OutputUpdateTask (short _type, const GS::UniString& _text) : text (_text), type (_type)
             {}
             virtual void Run ()
             {
@@ -410,9 +412,8 @@ void TapirPalette::ExecuteScript (const PopUpItemData& popUpItemData)
         }
 
     public:
-        explicit UIUpdaterThread (GS::Process& p) : process(p)
-        {
-        }
+        explicit UIUpdaterThread (GS::Process& p) : process (p)
+        {}
         GS::UniString ReadFromChannel (GS::IBinaryChannel& channel)
         {
             if (channel.GetAvailable () <= 0) {
@@ -440,7 +441,7 @@ void TapirPalette::ExecuteScript (const PopUpItemData& popUpItemData)
         {
             GS::MessageLoopExecutor ().Execute (new IconUpdateTask ());
 
-            const GS::Timeout Timeout = {0, 0, 0, 10 /*ms*/};
+            const GS::Timeout Timeout = { 0, 0, 0, 10 /*ms*/ };
             while (!process.WaitFor (Timeout)) {
                 ReadFromChannels ();
             }
@@ -466,13 +467,13 @@ void TapirPalette::ExecuteScript (const PopUpItemData& popUpItemData)
                 return;
             }
             command = uvCommand;
-            argv = {"run", "--script", filePath, "--port", GS::ValueToUniString (GetConnectionPort ())};
+            argv = { "run", "--script", filePath, "--port", GS::ValueToUniString (GetConnectionPort ()) };
             if (popUpItemData.repo != nullptr && !popUpItemData.repo->token.IsEmpty ()) {
-                argv.Append ({"--token", popUpItemData.repo->token});
+                argv.Append ({ "--token", popUpItemData.repo->token });
             }
         } else {
             command = filePath;
-            argv = {"--port", GS::ValueToUniString (GetConnectionPort ())};
+            argv = { "--port", GS::ValueToUniString (GetConnectionPort ()) };
         }
 
         constexpr bool redirectStandardOutput = true;
@@ -524,59 +525,59 @@ bool TapirPalette::AddScriptToPopUp (GS::Ref<PopUpItemData> popUpData, short ind
 
 void TapirPalette::AddScriptsFromRepositories ()
 {
-    IO::Location tapirTempFolder = GetTapirTemporaryFolder ();
-    IO::fileSystem.Delete (tapirTempFolder);
+    //return;
+    //IO::Location tapirTempFolder = GetTapirTemporaryFolder ();
+    //IO::fileSystem.Delete (tapirTempFolder);
+    //const auto& repositories = Config::Instance ().Repositories ();
+    //for (auto& repo : repositories) {
+    //    const std::unique_ptr<std::regex> excludeFromDownloadRegex = repo.excludeFromDownloadPattern.IsEmpty () ? nullptr : std::make_unique<std::regex> (repo.excludeFromDownloadPattern.ToCStr ().Get ());
+    //    const std::unique_ptr<std::regex> excludeRegex = repo.excludePattern.IsEmpty () ? nullptr : std::make_unique<std::regex> (repo.excludePattern.ToCStr ().Get ());
+    //    const std::unique_ptr<std::regex> includeRegex = repo.includePattern.IsEmpty () ? nullptr : std::make_unique<std::regex> (repo.includePattern.ToCStr ().Get ());
 
-    const auto& repositories = Config::Instance ().Repositories ();
-    for (auto& repo : repositories) {
-        const std::unique_ptr<std::regex> excludeFromDownloadRegex = repo.excludeFromDownloadPattern.IsEmpty () ? nullptr : std::make_unique<std::regex> (repo.excludeFromDownloadPattern.ToCStr ().Get ());
-        const std::unique_ptr<std::regex> excludeRegex = repo.excludePattern.IsEmpty () ? nullptr : std::make_unique<std::regex> (repo.excludePattern.ToCStr ().Get ());
-        const std::unique_ptr<std::regex> includeRegex = repo.includePattern.IsEmpty () ? nullptr : std::make_unique<std::regex> (repo.includePattern.ToCStr ().Get ());
-
-        IO::RelativeLocation repoRelativeLoc (repo.repoOwner);
-        repoRelativeLoc.Append (IO::Name (repo.repoName));
-        IO::RelativeLocation repoFolderRelativeLoc (repoRelativeLoc);
-        if (!repo.relativeLoc.IsEmpty ()) {
-            repoFolderRelativeLoc.Append (IO::RelativeLocation (repo.relativeLoc));
-        };
-        std::map<GS::UniString, GS::UniString> headers;
-        if (!repo.token.IsEmpty ()) {
-            headers.emplace ("Authorization", "Bearer " + repo.token);
-        }
-        ACAPI_WriteReport ("Tapir is downloading content from GitHub repository: " + repo.repoOwner + "/" + repo.repoName, false);
-        for (auto kv : GetFilesFromGitHubInRelativeLocation (repo)) {
-            const GS::UniString repoLoc = repo.repoOwner + "/" + repo.repoName + "/" + kv.first;
-            if (excludeFromDownloadRegex && std::regex_match (repoLoc.ToCStr ().Get (), *excludeFromDownloadRegex)) {
-                ACAPI_WriteReport ("Skipping download of " + repoLoc + " due to exclude pattern", false);
-                continue;
-            }
-            const auto content = DownloadFileContent (kv.second, headers);
-            IO::RelativeLocation relLoc = repoRelativeLoc;
-            relLoc.Append (IO::RelativeLocation (kv.first));
-            const IO::Location fileLoc = SaveBuiltInScript (tapirTempFolder, relLoc, content);
-            ACAPI_WriteReport ("Downloaded " + repoLoc, false);
-            if (excludeRegex) {
-                if (std::regex_match (kv.first.ToCStr ().Get (), *excludeRegex)) {
-                    ACAPI_WriteReport ("Skipping use of " + repoLoc + " due to exclude pattern", false);
-                    continue;
-                }
-            } else if (includeRegex) {
-                if (!std::regex_match (kv.first.ToCStr ().Get (), *includeRegex)) {
-                    ACAPI_WriteReport ("Skipping use of " + repoLoc + " due to include pattern", false);
-                    continue;
-                }
-            } else {
-                IO::Name fileName;
-                if (relLoc.GetLength () != (1 + repoFolderRelativeLoc.GetLength ()) ||
-                    fileLoc.GetLastLocalName (&fileName) != NoError ||
-                    fileName.GetExtension ().ToLowerCase () != "py") {
-                    continue;
-                }
-            }
-            ACAPI_WriteReport ("Added to the popup: " + repoLoc, false);
-            AddScriptToPopUp (GS::NewRef<PopUpItemData> (fileLoc, kv.first, &repo), DG::PopUp::BottomItem);
-        }
-    }
+    //    IO::RelativeLocation repoRelativeLoc (repo.repoOwner);
+    //    repoRelativeLoc.Append (IO::Name (repo.repoName));
+    //    IO::RelativeLocation repoFolderRelativeLoc (repoRelativeLoc);
+    //    if (!repo.relativeLoc.IsEmpty ()) {
+    //        repoFolderRelativeLoc.Append (IO::RelativeLocation (repo.relativeLoc));
+    //    };
+    //    std::map<GS::UniString, GS::UniString> headers;
+    //    if (!repo.token.IsEmpty ()) {
+    //        headers.emplace ("Authorization", "Bearer " + repo.token);
+    //    }
+    //    ACAPI_WriteReport ("Tapir is downloading content from GitHub repository: " + repo.repoOwner + "/" + repo.repoName, false);
+    //    for (auto kv : GetFilesFromGitHubInRelativeLocation (repo)) {
+    //        const GS::UniString repoLoc = repo.repoOwner + "/" + repo.repoName + "/" + kv.first;
+    //        if (excludeFromDownloadRegex && std::regex_match (repoLoc.ToCStr ().Get (), *excludeFromDownloadRegex)) {
+    //            ACAPI_WriteReport ("Skipping download of " + repoLoc + " due to exclude pattern", false);
+    //            continue;
+    //        }
+    //        const auto content = DownloadFileContent (kv.second, headers);
+    //        IO::RelativeLocation relLoc = repoRelativeLoc;
+    //        relLoc.Append (IO::RelativeLocation (kv.first));
+    //        const IO::Location fileLoc = SaveBuiltInScript (tapirTempFolder, relLoc, content);
+    //        ACAPI_WriteReport ("Downloaded " + repoLoc, false);
+    //        if (excludeRegex) {
+    //            if (std::regex_match (kv.first.ToCStr ().Get (), *excludeRegex)) {
+    //                ACAPI_WriteReport ("Skipping use of " + repoLoc + " due to exclude pattern", false);
+    //                continue;
+    //            }
+    //        } else if (includeRegex) {
+    //            if (!std::regex_match (kv.first.ToCStr ().Get (), *includeRegex)) {
+    //                ACAPI_WriteReport ("Skipping use of " + repoLoc + " due to include pattern", false);
+    //                continue;
+    //            }
+    //        } else {
+    //            IO::Name fileName;
+    //            if (relLoc.GetLength () != (1 + repoFolderRelativeLoc.GetLength ()) ||
+    //                fileLoc.GetLastLocalName (&fileName) != NoError ||
+    //                fileName.GetExtension ().ToLowerCase () != "py") {
+    //                continue;
+    //            }
+    //        }
+    //        ACAPI_WriteReport ("Added to the popup: " + repoLoc, false);
+    //        AddScriptToPopUp (GS::NewRef<PopUpItemData> (fileLoc, kv.first, &repo), DG::PopUp::BottomItem);
+    //    }
+    //}
 }
 
 void TapirPalette::AddScriptsFromCustomScriptsFolder ()
@@ -590,7 +591,7 @@ void TapirPalette::AddScriptsFromCustomScriptsFolder ()
     IO::fileSystem.CreateFolderTree (customScriptsFolderLoc);
 
     IO::Folder customScriptsFolder (customScriptsFolderLoc);
-    customScriptsFolder.Enumerate ([&] (const IO::Name& name, bool isFolder) {
+    customScriptsFolder.Enumerate ([&](const IO::Name& name, bool isFolder) {
         if (isFolder) {
             return;
         }
@@ -687,7 +688,7 @@ bool TapirPalette::UpdateAddOn ()
     GS::UniString filePath;
     fileLoc.ToPath (&filePath);
 
-    const GS::Array<GS::UniString> argv = { "run", "--script", filePath, "--port", GS::ValueToUniString (GetConnectionPort ()), "--downloadUrl", VersionChecker::LatestVersionDownloadUrl (), "--addOnLocation", addOnLocationStr};
+    const GS::Array<GS::UniString> argv = { "run", "--script", filePath, "--port", GS::ValueToUniString (GetConnectionPort ()), "--downloadUrl", VersionChecker::LatestVersionDownloadUrl (), "--addOnLocation", addOnLocationStr };
 
     constexpr bool redirectStandardOutput = false;
     constexpr bool redirectStandardInput = false;
@@ -718,7 +719,7 @@ void TapirPalette::SaveScriptsToPreferences ()
     }
     preferencesStr += GS::ValueToUniString (scriptSelectionPopUp.GetSelectedItem ());
     auto cStr = preferencesStr.ToCStr ();
-    ACAPI_SetPreferences (PREFERENCES_VERSION, (GSSize)strlen (cStr.Get()), cStr.Get());
+    ACAPI_SetPreferences (PREFERENCES_VERSION, (GSSize) strlen (cStr.Get ()), cStr.Get ());
 }
 
 bool TapirPalette::IsValidLocation (const IO::Location& location)
@@ -748,13 +749,13 @@ short TapirPalette::AddScriptsFromPreferences ()
         return DG::PopUp::TopItem;
     }
 
-    std::unique_ptr<char> data(new char[nBytes]);
+    std::unique_ptr<char> data (new char[nBytes]);
     ACAPI_GetPreferences (&version, &nBytes, data.get ());
     GS::Array<GS::UniString> scriptPathArray;
     GS::UniString (data.get ()).Split ("\n", GS::UniString::SkipEmptyParts, &scriptPathArray);
     short selectedItemBeforeClose = -1;
     if (GS::UniStringToValue<short> (scriptPathArray.GetLast (), selectedItemBeforeClose, GS::ToValueMode::Strict)) {
-        scriptPathArray.DeleteLast();
+        scriptPathArray.DeleteLast ();
     }
     for (auto&& scriptPath : scriptPathArray) {
         IO::Location ownScript (scriptPath);

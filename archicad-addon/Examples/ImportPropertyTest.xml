@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+		<BuildingInformation>
+			<Classification/>
+			<PropertyDefinitionGroups>
+				<PropertyDefinitionGroup>
+					<Name>Property_Test Add-On Group</Name>
+					<PropertyDefinitions>
+						<PropertyDefinition>
+							<Name>Property1</Name>
+							<Description>Expression Property imported from the Property_Test add-on.</Description>
+							<ValueDescriptor Type="SingleValueDescriptor">
+								<ValueType>Integer</ValueType>
+							</ValueDescriptor>
+							<MeasureType>Default</MeasureType>
+							<DefaultValue>
+								<DefaultValueType>Expression</DefaultValueType>
+								<ExpressionDefaultValue>
+									<Expression>9 + {Property:Property_Test Add-On Group/Property2}</Expression>
+								</ExpressionDefaultValue>
+							</DefaultValue>
+							<ClassificationIDs/>
+						</PropertyDefinition>
+						<PropertyDefinition>
+							<Name>Property2</Name>
+							<Description>Property imported from the Property_Test add-on.</Description>
+							<ValueDescriptor Type="SingleValueDescriptor">
+								<ValueType>Integer</ValueType>
+							</ValueDescriptor>
+							<DefaultValue>
+								<DefaultValueType>Basic</DefaultValueType>
+								<Variant Type="IntVariant">
+									<Status>Normal</Status>
+									<Value>42</Value>
+								</Variant>
+							</DefaultValue>
+							<ClassificationIDs/>
+						</PropertyDefinition>
+					</PropertyDefinitions>
+				</PropertyDefinitionGroup>
+			</PropertyDefinitionGroups>
+		</BuildingInformation>
